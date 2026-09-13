@@ -81,39 +81,84 @@ def predict_sales():
 @kart_predictor_api.post('/v1/predictbatch')
 def predict_sales_batch():
     """
-    This function handles POST requests to the '/v1/predictbatch' endpoint.
-    It expects a CSV file containing product/store details for multiple products
-    and returns the predicted sales totals as a dictionary in the JSON response.
+    Handles batch prediction requests.
+    Expects a CSV file containing product/store details.
     """
+
     try:
-      # Get the uploaded CSV file from the request
-      file = request.files['file']
+        # Get the uploaded CSV file
+        file = request.files['file']
 
-      # Read the CSV file into a Pandas DataFrame
-      input_data = pd.read_csv(file)
+        # Read CSV into DataFrame
+        input_data = pd.read_csv(file)
 
-      #Create Product_id_prefix from product_id
-      input_data['Product_id_Prefix'] = input_data['Product_Id_char'].astype(str).str[:2]
+        # Create Product_Id_Prefix from Product_Id_Char
+        input_data['Product_Id_Prefix'] = (
+            input_data['Product_Id_Char']
+            .astype(str)
+            .str[:2]
+        )
 
-      #create Producttype from producttype category
-      input_data['Product_Type'] =input_data['Product_Type_Category']
-      # Make predictions for all products in the DataFrame (get log_sales)
-      predicted_log_sales = model.predict(input_data).tolist()
+        # Convert Product_Type_Category to Product_Type
+        input_data['Product_Type'] = input_data['Product_Type_Category']
 
-      # Calculate actual sales totals
-      predicted_sales = [round(float(np.exp(log_sales)), 2) for log_sales in predicted_log_sales]
+        # Convert Store_Age_Years to Store_Establishment_Year
+        # IMPORTANT: change 2023 if your Store_Age_Years was calculated
+        # using a different reference year.
+        input_data['Store_Establishment_Year'] = (
+            2023 - input_data['Store_Age_Years']
+        )
 
-      # Create a dictionary of predictions with product IDs as keys
-      product_ids = input_data['Product_Id'].tolist()  # Assuming 'Product_Id' is the product ID column
-      output_dict = dict(zip(product_ids, predicted_sales))  # Use actual sales totals
+        # Check that Store_Id is available
+        if 'Store_Id' not in input_data.columns:
+            return jsonify({
+                'error': 'Store_Id column is missing from batch CSV'
+            }), 400
 
-      # Return the predictions dictionary as a JSON response
-      return output_dict
+        # Select exactly the columns expected by the trained model
+        model_input = input_data[
+            [
+                'Product_Weight',
+                'Product_Sugar_Content',
+                'Product_Allocated_Area',
+                'Product_MRP',
+                'Store_Size',
+                'Store_Location_City_Type',
+                'Store_Type',
+                'Product_Id_Prefix',
+                'Store_Establishment_Year',
+                'Product_Type',
+                'Store_Id'
+            ]
+        ]
+
+        # Make predictions
+        predicted_sales = model.predict(model_input).tolist()
+
+        # Round predictions
+        predicted_sales = [
+            round(float(prediction), 2)
+            for prediction in predicted_sales
+        ]
+
+        # Get Product IDs
+        if 'Product_Id' in input_data.columns:
+            product_ids = input_data['Product_Id'].astype(str).tolist()
+        else:
+            product_ids = input_data['Product_Id_Char'].astype(str).tolist()
+
+        # Create output dictionary
+        output_dict = dict(
+            zip(product_ids, predicted_sales)
+        )
+
+        # Return predictions
+        return jsonify(output_dict)
 
     except Exception as e:
-      return jsonify({
-         "error":str(e)
-      }), 400
+        return jsonify({
+            'error': str(e)
+        }), 400
 
 # Run the Flask application in debug mode if this script is executed directly
 if __name__ == '__main__':

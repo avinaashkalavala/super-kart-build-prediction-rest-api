@@ -93,8 +93,10 @@ def predict_sales_batch():
       input_data = pd.read_csv(file)
 
       #Create Product_id_prefix from product_id
-      input_data['Product_id_prefix'] = input_data['Product_Id'].str[:2]
+      input_data['Product_id_Prefix'] = input_data['Product_Id_char'].astype(str).str[:2]
 
+      #create Producttype from producttype category
+      input_data['Product_Type'] =input_data['Product_Type_Category']
       # Make predictions for all products in the DataFrame (get log_sales)
       predicted_log_sales = model.predict(input_data).tolist()
 

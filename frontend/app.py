@@ -3,7 +3,9 @@ import pandas as pd
 import requests
 
 # Base URL of the Flask backend
-BACKEND_URL = "http://backend:7860"
+#BACKEND_URL = "http://backend:7860"
+
+BACKEND_URL = "http://172.18.0.1:7860"
 
 # Set the title of the Streamlit app
 st.title("SuperKart Sales Prediction")
@@ -28,6 +30,7 @@ store_location_city_type = st.selectbox("Store Location City Type", ["Tier 1", "
 store_type = st.selectbox("Store Type", [
     "Supermarket Type1", "Supermarket Type2", "Grocery Store", "Supermarket Type3"
 ])
+store_id = st.selectbox("Store_Id",["OUT001","OUT002","OUT003","OUT004"])
 
 # Convert user input into a DataFrame
 input_data = pd.DataFrame([{
@@ -40,7 +43,8 @@ input_data = pd.DataFrame([{
     'Store_Establishment_Year': store_establishment_year,
     'Store_Size': store_size,
     'Store_Location_City_Type': store_location_city_type,
-    'Store_Type': store_type
+    'Store_Type': store_type,
+    'Store_Id': store_id
 }])
 
 # Make prediction when the "Predict" button is clicked

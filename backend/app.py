@@ -94,7 +94,7 @@ def predict_sales_batch():
 
         # Create Product_Id_Prefix from Product_Id_Char
         input_data['Product_Id_Prefix'] = (
-            input_data['Product_Id_Char']
+            input_data['Product_Id_char']
             .astype(str)
             .str[:2]
         )
@@ -145,7 +145,7 @@ def predict_sales_batch():
         if 'Product_Id' in input_data.columns:
             product_ids = input_data['Product_Id'].astype(str).tolist()
         else:
-            product_ids = input_data['Product_Id_Char'].astype(str).tolist()
+            product_ids = input_data['Product_Id_char'].astype(str).tolist()
 
         # Create output dictionary
         output_dict = dict(
